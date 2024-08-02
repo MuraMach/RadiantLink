@@ -1,0 +1,211 @@
+#### Step 1: Initial Data Push
+
+1. **Transaction Creation**:
+   - Push the original data `D` to the blockchain.
+   - Script:
+     ```assembly
+     OP_RETURN OP_PUSHDATA1 <D>
+     ```
+
+#### Step 2: Obfuscation Process
+
+1. **Hashing the Original Data**:
+   - Use a secure hash function, such as SHA-256.
+   - Let \( H(D) \) represent the SHA-256 hash of the data \( D \).
+
+   **Mathematical Representation**:
+   \[
+   H(D) = \text{SHA-256}(D)
+   \]
+
+2. **Combining with a Nonce**:
+   - Generate a random nonce \( N \).
+   - Combine \( H(D) \) with \( N \) to create a commitment \( C \).
+   
+   **Mathematical Representation**:
+   \[
+   C = H(H(D) \oplus N)
+   \]
+   where \( \oplus \) denotes the bitwise XOR operation.
+
+3. **Storing the Commitment**:
+   - Store the commitment \( C \) on the blockchain in a new transaction.
+   - Script:
+     ```assembly
+     OP_RETURN OP_PUSHDATA1 <C>
+     ```
+
+   - This transaction will be included in a subsequent block (e.g., block 510).
+
+#### Step 3: Verification and Obscuration
+
+1. **Verification Script**:
+   - Verify that the original data \( D \), when hashed and combined with the nonce \( N \), matches the stored commitment \( C \).
+   - Drop the original data and store a cryptographic proof or another hash on the blockchain.
+
+   **Verification Script**:
+   ```assembly
+   OP_DUP
+   OP_SHA256
+   OP_PUSHDATA1 <N>
+   OP_ADD
+   OP_EQUALVERIFY
+   OP_DROP
+   OP_RETURN OP_PUSHDATA1 <H(H(D) \oplus N)>
+   ```
+
+   **Mathematical Representation**:
+   \[
+   H(D) = \text{SHA-256}(D) \implies H(H(D) \oplus N) = C
+   \]
+
+   This script ensures that the original data \( D \) is obscured, as it verifies the hash and commitment but only stores \( H(H(D) \oplus N) \) on the blockchain.
+
+### How the Data is Obscured
+
+#### 1. Initial Data Storage
+
+- **Original Data**:
+  - Stored in block 509 as:
+    ```assembly
+    OP_RETURN OP_PUSHDATA1 "Hello, Radiant!"
+    ```
+
+#### 2. Hashing and Commitment
+
+- **Hashing**:
+  - Compute the SHA-256 hash of the original data.
+  \[
+  H("Hello, Radiant!") = \text{SHA-256}("Hello, Radiant!")
+  \]
+
+- **Nonce Generation**:
+  - Generate a random nonce \( N \).
+
+- **Commitment**:
+  - Combine the hash with the nonce using bitwise XOR.
+  \[
+  C = H(H("Hello, Radiant!") \oplus N)
+  \]
+
+- **Store Commitment**:
+  - Store \( C \) on the blockchain in block 510:
+    ```assembly
+    OP_RETURN OP_PUSHDATA1 <C>
+    ```
+
+#### 3. Verification and Obscuration
+
+- **Verification Script**:
+  - The script ensures the original data is obscured.
+  ```assembly
+  OP_DUP
+  OP_SHA256
+  OP_PUSHDATA1 <N>
+  OP_ADD
+  OP_EQUALVERIFY
+  OP_DROP
+  OP_RETURN OP_PUSHDATA1 <H(H(D) \oplus N)>
+  ```
+
+- **Verification**:
+  - The script verifies that the hash of the original data combined with the nonce matches the commitment.
+  \[
+  H(H("Hello, Radiant!") \oplus N) = C
+  \]
+
+- **Obscured Storage**:
+  - The script then stores \( H(H(D) \oplus N) \), ensuring the original data \( D \) is no longer directly readable.
+
+### Visual Diagram
+
+```plaintext
++---------------------------+
+|                           |
+| Step 1: Push Data         |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Block 509                 |
+|                           |
+| Transaction:              |
+| OP_RETURN                 |
+| OP_PUSHDATA1 "Hello,      |
+| Radiant!"                 |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Step 2: Obfuscation       |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Hashing & Commitment      |
+|                           |
+| H(D) = SHA-256(D)         |
+| N = random_nonce          |
+| C = H(H(D) ⊕ N)           |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Block 510                 |
+|                           |
+| Transaction:              |
+| OP_RETURN                 |
+| OP_PUSHDATA1 <C>          |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Step 3: Verification      |
+|                           |
++---------------------------+
+         |
+         v
++---------------------------+
+|                           |
+| Verification & Obscuration|
+|                           |
+| Verify:                   |
+| H(H(D) ⊕ N) = C           |
+| Script:                   |
+| OP_DUP                    |
+| OP_SHA256                 |
+| OP_PUSHDATA1 <N>          |
+| OP_ADD                    |
+| OP_EQUALVERIFY            |
+| OP_DROP                   |
+| OP_RETURN OP_PUSHDATA1    |
+| <H(H(D) ⊕ N)>             |
+|                           |
++---------------------------+
+```
+
+### Mathematical Security
+
+1. **Hash Function**:
+   - The SHA-256 hash function is secure, ensuring that \( H(D) \) is computationally infeasible to invert, meaning the original data \( D \) cannot be easily derived from \( H(D) \).
+
+2. **Nonce**:
+   - The random nonce \( N \) adds an additional layer of security, making it even harder to reverse-engineer the original data.
+
+3. **Commitment**:
+   - The commitment \( C \) created by combining the hash of the original data with the nonce using bitwise XOR ensures that the original data is securely obscured.
+
+4. **Verification**:
+   - The verification script enforces that any attempt to retrieve the original data must satisfy the cryptographic proof, ensuring data integrity and confidentiality.
+
+This advanced method ensures that the original data pushed onto the Radiant blockchain is securely obscured using cryptographic principles, making it unreadable without the proper verification and cryptographic proofs.
